@@ -1,0 +1,15 @@
+{
+  "null": null,
+  "number": 3.14,
+  "string": "@CFString",
+  "array": [null, "string", 3, { "key": "value" }],
+  "bool": {
+    "true": true,
+    "false": false
+  },
+  "object": {
+    "a": 100,
+    "b": 200,
+    "c": { "d": null }
+  }
+}
