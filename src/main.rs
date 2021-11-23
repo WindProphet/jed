@@ -19,10 +19,14 @@ struct DisplayConfig<'a> {
 }
 
 impl<'a> DisplayConfig<'a> {
-    fn print_string(&mut self, val: &str) -> Result<(), crossterm::ErrorKind> {
+    fn print_string(&mut self, val: &str, is_key: bool) -> Result<(), crossterm::ErrorKind> {
         queue!(
             self.w,
-            SetForegroundColor(Color::DarkGreen),
+            SetForegroundColor(if is_key {
+                Color::DarkRed
+            } else {
+                Color::DarkGreen
+            }),
             Print("\""),
             Print(val),
             Print("\""),
@@ -65,7 +69,7 @@ impl<'a> DisplayConfig<'a> {
         match val {
             Value::Null => self.print_null()?,
             Value::Bool(b) => self.print_bool(b)?,
-            Value::String(s) => self.print_string(s)?,
+            Value::String(s) => self.print_string(s, false)?,
             Value::Number(n) => self.print_number(n)?,
             Value::Array(a) => {
                 let mut len = a.len();
@@ -98,7 +102,7 @@ impl<'a> DisplayConfig<'a> {
                     self.indent += 2;
                     for (key, el) in o {
                         self.w.queue(Print(" ".repeat(self.indent)))?;
-                        self.print_string(key)?;
+                        self.print_string(key, true)?;
                         self.w.queue(Print(": "))?;
                         self.print_json(el)?;
                         len -= 1;
