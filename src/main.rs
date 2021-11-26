@@ -131,9 +131,9 @@ fn print_events() -> crossterm::Result<()> {
                 code: KeyCode::Char('c'),
                 modifiers: KeyModifiers::CONTROL,
             }) => return Ok(()),
-            Event::Key(event) => println!("{:?}", event),
-            Event::Mouse(event) => println!("{:?}", event),
-            Event::Resize(width, height) => println!("New size {}x{}", width, height),
+            Event::Key(event) => println!("{:?}\r", event),
+            Event::Mouse(event) => println!("{:?}\r", event),
+            Event::Resize(width, height) => println!("New size {}x{}\r", width, height),
         }
     }
 }
