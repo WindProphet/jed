@@ -1,5 +1,7 @@
 use clap::{App, Arg};
+use crossterm::event::{read, Event, KeyCode, KeyEvent, KeyModifiers};
 use crossterm::style::{Attribute, Color, Print, ResetColor, SetAttribute, SetForegroundColor};
+use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
 use crossterm::{queue, QueueableCommand};
 use serde_json::{Number, Value};
 use std::error::Error;
@@ -122,6 +124,20 @@ impl<'a> DisplayConfig<'a> {
     }
 }
 
+fn print_events() -> crossterm::Result<()> {
+    loop {
+        match read()? {
+            Event::Key(KeyEvent {
+                code: KeyCode::Char('c'),
+                modifiers: KeyModifiers::CONTROL,
+            }) => return Ok(()),
+            Event::Key(event) => println!("{:?}", event),
+            Event::Mouse(event) => println!("{:?}", event),
+            Event::Resize(width, height) => println!("New size {}x{}", width, height),
+        }
+    }
+}
+
 fn main() {
     let matches = App::new("JSON Editor")
         .version(env!("CARGO_PKG_VERSION"))
@@ -141,4 +157,7 @@ fn main() {
             Err(err) => println!("{}", err),
         };
     }
+    enable_raw_mode().unwrap();
+    print_events().unwrap();
+    disable_raw_mode().unwrap();
 }
