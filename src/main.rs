@@ -1,7 +1,10 @@
 use clap::{App, Arg};
 use crossterm::event::{read, Event, KeyCode, KeyEvent, KeyModifiers};
 use crossterm::style::{Attribute, Color, Print, ResetColor, SetAttribute, SetForegroundColor};
-use crossterm::terminal::{disable_raw_mode, enable_raw_mode, ScrollDown, ScrollUp};
+use crossterm::terminal::{
+    disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen, ScrollDown,
+    ScrollUp,
+};
 use crossterm::{queue, ExecutableCommand, QueueableCommand};
 use serde_json::{Number, Value};
 use std::error::Error;
@@ -159,6 +162,7 @@ fn main() {
         .about("Command-line JSON processing tool")
         .arg(Arg::new("FILE").about("input file"))
         .get_matches();
+    std::io::stdout().execute(EnterAlternateScreen).unwrap();
     enable_raw_mode().unwrap();
     if let Some(i) = matches.value_of("FILE") {
         match read_json_from_file(i) {
@@ -174,4 +178,5 @@ fn main() {
     }
     listen_events().unwrap();
     disable_raw_mode().unwrap();
+    std::io::stdout().execute(LeaveAlternateScreen).unwrap();
 }
