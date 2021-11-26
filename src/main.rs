@@ -1,8 +1,8 @@
 use clap::{App, Arg};
 use crossterm::event::{read, Event, KeyCode, KeyEvent, KeyModifiers};
 use crossterm::style::{Attribute, Color, Print, ResetColor, SetAttribute, SetForegroundColor};
-use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
-use crossterm::{queue, QueueableCommand};
+use crossterm::terminal::{disable_raw_mode, enable_raw_mode, ScrollDown, ScrollUp};
+use crossterm::{queue, ExecutableCommand, QueueableCommand};
 use serde_json::{Number, Value};
 use std::error::Error;
 use std::fs::File;
@@ -78,7 +78,7 @@ impl<'a> DisplayConfig<'a> {
                 if len == 0 {
                     self.w.queue(Print("[]"))?;
                 } else {
-                    self.w.queue(Print("["))?.queue(Print("\n"))?;
+                    self.w.queue(Print("["))?.queue(Print("\r\n"))?;
                     self.indent += 2;
                     for el in a {
                         self.w.queue(Print(" ".repeat(self.indent)))?;
@@ -87,7 +87,7 @@ impl<'a> DisplayConfig<'a> {
                         if len != 0 {
                             self.w.queue(Print(","))?;
                         }
-                        self.w.queue(Print("\n"))?;
+                        self.w.queue(Print("\r\n"))?;
                     }
                     self.indent -= 2;
                     self.w
@@ -100,7 +100,7 @@ impl<'a> DisplayConfig<'a> {
                 if len == 0 {
                     self.w.queue(Print("{}"))?;
                 } else {
-                    self.w.queue(Print("{"))?.queue(Print("\n"))?;
+                    self.w.queue(Print("{"))?.queue(Print("\r\n"))?;
                     self.indent += 2;
                     for (key, el) in o {
                         self.w.queue(Print(" ".repeat(self.indent)))?;
@@ -111,7 +111,7 @@ impl<'a> DisplayConfig<'a> {
                         if len != 0 {
                             self.w.queue(Print(","))?;
                         }
-                        self.w.queue(Print("\n"))?;
+                        self.w.queue(Print("\r\n"))?;
                     }
                     self.indent -= 2;
                     self.w
@@ -124,16 +124,30 @@ impl<'a> DisplayConfig<'a> {
     }
 }
 
-fn print_events() -> crossterm::Result<()> {
+fn listen_events() -> crossterm::Result<()> {
     loop {
         match read()? {
             Event::Key(KeyEvent {
                 code: KeyCode::Char('c'),
                 modifiers: KeyModifiers::CONTROL,
+            })
+            | Event::Key(KeyEvent {
+                code: KeyCode::Char('q'),
+                modifiers: KeyModifiers::NONE,
             }) => return Ok(()),
-            Event::Key(event) => println!("{:?}\r", event),
-            Event::Mouse(event) => println!("{:?}\r", event),
-            Event::Resize(width, height) => println!("New size {}x{}\r", width, height),
+            Event::Key(KeyEvent {
+                code: KeyCode::Char('j'),
+                modifiers: KeyModifiers::NONE,
+            }) => {
+                std::io::stdout().execute(ScrollDown(1))?;
+            }
+            Event::Key(KeyEvent {
+                code: KeyCode::Char('k'),
+                modifiers: KeyModifiers::NONE,
+            }) => {
+                std::io::stdout().execute(ScrollUp(1))?;
+            }
+            _ => (),
         }
     }
 }
@@ -145,6 +159,7 @@ fn main() {
         .about("Command-line JSON processing tool")
         .arg(Arg::new("FILE").about("input file"))
         .get_matches();
+    enable_raw_mode().unwrap();
     if let Some(i) = matches.value_of("FILE") {
         match read_json_from_file(i) {
             Ok(ser) => {
@@ -157,7 +172,6 @@ fn main() {
             Err(err) => println!("{}", err),
         };
     }
-    enable_raw_mode().unwrap();
-    print_events().unwrap();
+    listen_events().unwrap();
     disable_raw_mode().unwrap();
 }
