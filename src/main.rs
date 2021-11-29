@@ -127,27 +127,29 @@ impl<'a> DisplayConfig<'a> {
     }
 }
 
+macro_rules! key {
+    (ctrl+$k:expr) => {
+        Event::Key(KeyEvent {
+            code: KeyCode::Char($k),
+            modifiers: KeyModifiers::CONTROL,
+        })
+    };
+    ($k:expr) => {
+        Event::Key(KeyEvent {
+            code: KeyCode::Char($k),
+            modifiers: KeyModifiers::NONE,
+        })
+    };
+}
+
 fn listen_events() -> crossterm::Result<()> {
     loop {
         match read()? {
-            Event::Key(KeyEvent {
-                code: KeyCode::Char('c'),
-                modifiers: KeyModifiers::CONTROL,
-            })
-            | Event::Key(KeyEvent {
-                code: KeyCode::Char('q'),
-                modifiers: KeyModifiers::NONE,
-            }) => return Ok(()),
-            Event::Key(KeyEvent {
-                code: KeyCode::Char('j'),
-                modifiers: KeyModifiers::NONE,
-            }) => {
+            key!(ctrl + 'c') | key!('q') => return Ok(()),
+            key!('j') => {
                 std::io::stdout().execute(ScrollDown(1))?;
             }
-            Event::Key(KeyEvent {
-                code: KeyCode::Char('k'),
-                modifiers: KeyModifiers::NONE,
-            }) => {
+            key!('k') => {
                 std::io::stdout().execute(ScrollUp(1))?;
             }
             _ => (),
