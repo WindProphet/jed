@@ -21,20 +21,24 @@ fn read_json_from_file(path: &str) -> Result<Value, Box<dyn Error>> {
 }
 
 macro_rules! key {
-    (ctrl+$k:expr) => {
+    ($m:tt, ctrl + $($rest:tt)+) => (
+        key!(($m|KeyModifiers::CONTROL), $($rest)+)
+    );
+    ($m:tt, shift + $($rest:tt)+) => (
+        key!(($m|KeyModifiers::SHIFT), $($rest)+)
+    );
+    ($m:tt, $key:tt) => (
         Event::Key(KeyEvent {
-            code: KeyCode::Char($k),
-            modifiers: KeyModifiers::CONTROL,
+            code: KeyCode::Char($key),
+            modifiers: $m,
         })
-    };
-    ($k:expr) => {
-        Event::Key(KeyEvent {
-            code: KeyCode::Char($k),
-            modifiers: KeyModifiers::NONE,
-        })
+    );
+    ($($rest:tt)+) => {
+        key!((KeyModifiers::NONE), $($rest)+)
     };
 }
 
+#[allow(unused_parens)]
 fn listen_events() -> crossterm::Result<()> {
     loop {
         match read()? {
